@@ -101,9 +101,11 @@ module Groonga
       end
 
       def to_load_json(options = nil)
-        hash = __as_json(options)
-        hash['created_at'] = @created_at
-        hash['updated_at'] = @updated_at
+        timestamps = {
+          'created_at' => @created_at,
+          'updated_at' => @updated_at,
+        }
+        hash = __as_json(options).merge(timestamps)
         hash.reject { |key, _| key == '_id' }.to_json
       end
 
