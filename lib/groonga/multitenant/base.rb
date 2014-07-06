@@ -11,6 +11,15 @@ module Groonga
           self
         end
 
+        def inherited(subclass)
+          subclass.define_column_based_methods
+        end
+
+        def define_column_based_methods
+          column_list = groonga.column_list(table_name)
+          p column_list
+        end
+
         def where(params)
           #TODO Relation.new(@@groonga, self).where(params)
         end
