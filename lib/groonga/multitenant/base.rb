@@ -295,8 +295,8 @@ module Groonga
 
         hash = __as_json(options).merge(timestamp)
 
-        keys_to_reject = columns.select do |column|
-          column[:flags][/COLUMN_INDEX/]
+        columns.select do |column|
+          column[:flags][/COLUMN_VECTOR/]
         end.each do |column|
           hash[column[:name]] = instance_variable_get("@#{column[:name]}")
         end
