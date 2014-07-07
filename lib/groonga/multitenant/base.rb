@@ -42,7 +42,7 @@ module Groonga
         end
 
         def initialize(object, name, class_name)
-          @items = object.public_send(name)
+          @items = object.instance_variable_get("@#{name}")
           case class_name
           when nil
             @object_filter = RAW_DATA
