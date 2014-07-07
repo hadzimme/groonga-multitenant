@@ -74,16 +74,17 @@ module Groonga
       class IndexColumn
         include Enumerable
 
-        def initialize(object, range)
+        def initialize(object, range, groonga)
           @id = object.id
           @table = object.class.name.tableize
           @range = range
           @klass = range.classify.constantize
+          @groonga = groonga
         end
 
         def each
           return self.to_enum { self.count } unless block_given?
-          items = groonga.select(@range, query: "#{@table}:@#{@id}")
+          items = @groonga.select(@range, query: "#{@table}:@#{@id}")
 
           items.each do |params|
             yield @klass.new(params)
@@ -203,7 +204,7 @@ module Groonga
           attr_writer name
 
           define_method(name) do
-            IndexColumn.new(self, range)
+            IndexColumn.new(self, range, groonga)
           end
         end
 
