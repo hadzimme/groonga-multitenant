@@ -192,25 +192,25 @@ module Groonga
       alias __as_json as_json
       private :__as_json
 
-      def created_at
-        return nil unless @created_at
-        time = Time.at(@created_at)
-        if tz = Time.zone
-          time.getlocal(tz.formatted_offset)
-        else
-          time
-        end
-      end
+      # def created_at
+      #   return nil unless @created_at
+      #   time = Time.at(@created_at)
+      #   if tz = Time.zone
+      #     time.getlocal(tz.formatted_offset)
+      #   else
+      #     time
+      #   end
+      # end
 
-      def updated_at
-        return nil unless @updated_at
-        time = Time.at(@updated_at)
-        if tz = Time.zone
-          time.getlocal(tz.formatted_offset)
-        else
-          time
-        end
-      end
+      # def updated_at
+      #   return nil unless @updated_at
+      #   time = Time.at(@updated_at)
+      #   if tz = Time.zone
+      #     time.getlocal(tz.formatted_offset)
+      #   else
+      #     time
+      #   end
+      # end
 
       def persisted?
         !@_key.nil?
