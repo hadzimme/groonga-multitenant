@@ -297,6 +297,12 @@ module Groonga
 
         keys_to_reject = columns.select do |column|
           column[:flags][/COLUMN_INDEX/]
+        end.each do |column|
+          hash[column[:name]] = instance_variable_get("@#{column[:name]}")
+        end
+
+        keys_to_reject = columns.select do |column|
+          column[:flags][/COLUMN_INDEX/]
         end.map do |column|
           column[:name]
         end + ['_id']
