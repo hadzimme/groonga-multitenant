@@ -24,11 +24,11 @@ module Groonga
       class VectorColumn
         include Enumerable
 
-        RAW_DATA = lambda do |item|
+        RAW_DATA = lambda do |item, _|
           item
         end
 
-        TO_TIME = lambda do |item|
+        TO_TIME = lambda do |item, _|
           time = Time.at(item)
           if timezone = Time.zone
             time.getlocal(timezone.formatted_offset)
@@ -37,18 +37,21 @@ module Groonga
           end
         end
 
-        TO_MODEL = lambda do |item|
-          class_name.constantize.find(item)
+        TO_MODEL = lambda do |item, klass|
+          klass.find(item)
         end
 
         def initialize(object, name, class_name)
           @items = object.instance_variable_get("@#{name}")
           case class_name
           when nil
+            @class = nil
             @object_filter = RAW_DATA
           when 'Time'
+            @class = nil
             @object_filter = TO_TIME
           else
+            @class = class_name.constantize
             @object_filter = TO_MODEL
           end
         end
@@ -57,7 +60,7 @@ module Groonga
           return self.to_enum { @items.size } unless block_given?
 
           @items.each do |item|
-            yield @object_filter.call(item)
+            yield @object_filter.call(item, @class)
           end
 
           self
