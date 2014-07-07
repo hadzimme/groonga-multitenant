@@ -244,6 +244,14 @@ module Groonga
 
       def as_json(options = nil)
         hash = __as_json(options)
+        columns = groonga.column_list(table_name)
+
+        columns.select do |column|
+          column[:flags][/COLUMN_VECTOR/]
+        end.each do |column|
+          hash[column[:name]] = instance_variable_get("@#{column[:name]}")
+        end
+
         hash['id'] = @_key
         hash.reject { |key, _| key[/^_/] }
       end
