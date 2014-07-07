@@ -5,6 +5,16 @@ module Groonga
       include ActiveModel::Validations
       include ActiveModel::Serializers::JSON
 
+      class VectorColumn
+        include Enumerable
+
+        def initialize(object, name, klass)
+        end
+
+        def each
+        end
+      end
+
       class << self
         def configure(params)
           @@groonga = Groonga::Multitenant::Client.new(params)
