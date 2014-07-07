@@ -45,13 +45,13 @@ module Groonga
           @items = object.instance_variable_get("@#{name}")
           case class_name
           when nil
-            @class = nil
+            @klass = nil
             @object_filter = RAW_DATA
           when 'Time'
-            @class = nil
+            @klass = nil
             @object_filter = TO_TIME
           else
-            @class = class_name.constantize
+            @klass = class_name.constantize
             @object_filter = TO_MODEL
           end
         end
@@ -60,7 +60,7 @@ module Groonga
           return self.to_enum { @items.size } unless block_given?
 
           @items.each do |item|
-            yield @object_filter.call(item, @class)
+            yield @object_filter.call(item, @klass)
           end
 
           self
