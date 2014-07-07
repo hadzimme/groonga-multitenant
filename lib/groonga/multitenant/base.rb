@@ -71,6 +71,32 @@ module Groonga
         end
       end
 
+      class IndexColumn
+        include Enumerable
+
+        def initialize(object, range)
+          @id = object.id
+          @table = object.class.name.tableize
+          @range = range
+          @klass = range.classify.constantize
+        end
+
+        def each
+          return self.to_enum { self.count } unless block_given?
+          items = groonga.select(@range, query: "#{@table}:@#{@id}")
+
+          items.each do |params|
+            yield @klass.new(params)
+          end
+
+          self
+        end
+
+        def size
+          self.count
+        end
+      end
+
       class << self
         def configure(params)
           @@groonga = Groonga::Multitenant::Client.new(params)
@@ -91,6 +117,8 @@ module Groonga
             when /COLUMN_SCALAR/
               define_scalar_method(column[:name], column[:range])
             when /COLUMN_VECTOR/
+              define_vector_method(column[:name], column[:range])
+            when /COLUMN_INDEX/
               define_vector_method(column[:name], column[:range])
             end
           end
@@ -171,6 +199,14 @@ module Groonga
           end
         end
 
+        def define_index_method(name, range)
+          attr_writer name
+
+          define_method(name) do
+            IndexColumn.new(self, range)
+          end
+        end
+
         def define_time_range_method(name)
           attr_writer name
 
@@ -226,9 +262,10 @@ module Groonga
       end
 
       def to_load_json(options = nil)
+        columns = groonga.column_list(table_name)
         timestamp = {}
 
-        groonga.column_list.select do |column|
+        columns.select do |column|
           column[:range].intern == :Time
         end.each do |column|
           value = instance_variable_get("@#{column[:name]}")
@@ -236,7 +273,14 @@ module Groonga
         end
 
         hash = __as_json(options).merge(timestamp)
-        hash.reject { |key, _| key == '_id' }.to_json
+
+        keys_to_reject = columns.select do |column|
+          column[:flags][/COLUMN_INDEX/]
+        end.map do |column|
+          column[:name]
+        end + ['_id']
+
+        hash.reject { |key, _| keys_to_reject.include?(key) }.to_json
       end
 
       def values
