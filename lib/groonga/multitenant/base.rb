@@ -24,7 +24,7 @@ module Groonga
       class VectorColumn
         include Enumerable
 
-        def initialize(object, name, range)
+        def initialize(object, name, class_name)
         end
 
         def each
@@ -85,15 +85,26 @@ module Groonga
           self.name.tableize
         end
 
-        def define_scalar_method(name, range)
+        def column_class_name(range)
           case range.intern
           when *DATA_TYPES
-            attr_accessor name
+            nil
           when :Time
+            'Time'
+          else
+            range.classify
+          end
+        end
+
+        def define_scalar_method(name, range)
+          case class_name = column_class_name(range)
+          when nil
+            attr_accessor name
+          when 'Time'
             define_time_range_method(name)
           else
             define_method("#{name}=") do |item|
-              klass = range.classify.constantize
+              klass = class_name.constantize
               case item
               when klass
                 instance_variable_set("@#{name}", item.id)
@@ -105,17 +116,18 @@ module Groonga
             end
 
             define_method(name) do
-              klass = range.classify.constantize
+              klass = class_name.constantize
               klass.find(instance_variable_get("@#{name}"))
             end
           end
         end
 
         def define_vector_method(name, range)
+          class_name = column_class_name(range)
           attr_writer name
 
           define_method(name) do
-            VectorColumn.new(self, name, range)
+            VectorColumn.new(self, name, column_class_name(range))
           end
         end
 
