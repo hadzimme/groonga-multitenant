@@ -119,7 +119,7 @@ module Groonga
             when /COLUMN_VECTOR/
               define_vector_method(column[:name], column[:range])
             when /COLUMN_INDEX/
-              define_vector_method(column[:name], column[:range])
+              define_index_method(column[:name], column[:range])
             end
           end
         end
