@@ -259,15 +259,27 @@ module Groonga
 
       private
       def update
-        @updated_at = Time.new.to_f
+        update_timestamps
         groonga.load(values, table_name)
       end
 
       def create
-        @created_at = @updated_at = Time.new.to_f
+        create_timestamps
         table = table_name
         @_key = groonga.max_key(table) + 1
         groonga.load(values, table)
+      end
+
+      def update_timestamps
+        if self.respond_to?(:updated_at)
+          @updated_at = Time.new.to_f
+        end
+      end
+
+      def create_timestamps
+        if self.respond_to?(:created_at) && self.respond_to?(:updated_at)
+          @created_at = @updated_at = Time.new.to_f
+        end
       end
 
       def to_load_json(options = nil)
