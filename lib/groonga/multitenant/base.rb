@@ -17,7 +17,17 @@ module Groonga
 
         def define_column_based_methods
           column_list = groonga.column_list(table_name)
-          p column_list
+
+          column_list.select do |column|
+            column[:flags][/PERSISTENT/]
+          end.each do |column|
+            case column[:flags]
+            when /COLUMN_SCALAR/
+              define_scalar_method(column[:name], column[:range])
+            when /COLUMN_VECTOR/
+              define_vector_method(column[:name], column[:range])
+            end
+          end
         end
 
         def where(params)
@@ -48,10 +58,84 @@ module Groonga
         def table_name
           self.name.tableize
         end
+
+        DATA_TYPES = [
+          :Bool,
+          :Int8,
+          :UInt8,
+          :Int16,
+          :UInt16,
+          :Int32,
+          :UInt32,
+          :Int64,
+          :UInt64,
+          :Float,
+          :ShortText,
+          :Text,
+          :LongText,
+        ]
+
+        def column_class(range)
+          case range.intern
+          when *DATA_TYPES
+            nil
+          when :Time
+            :time
+          else
+            range.classify.constantize
+          end
+        end
+
+        def define_scalar_method(name, range)
+          case klass = column_class(range)
+          when nil
+            attr_accessor name
+          when :time
+            define_time_range_method(name)
+          else
+            define_method("#{name}=") do |item|
+              case item
+              when klass
+                instance_variable_set("@#{name}", item.id)
+              when Integer
+                instance_variable_set("@#{name}", item)
+              else
+                raise TypeError, "should be #{klass} or Integer"
+              end
+            end
+
+            define_method(name) do
+              klass.find(instance_variable_get("@#{name}"))
+            end
+          end
+        end
+
+        def define_vector_method(name, range)
+          klass = column_class(range)
+          attr_writer name
+
+          define_method(name) do
+            VectorColumn.new(self, name, klass)
+          end
+        end
+
+        def define_time_range_method(name)
+          attr_writer name
+
+          define_method(name) do
+            sec = instance_variable_get("@#{name}")
+            return unless sec
+            time = Time.at(sec)
+            if timezone = Time.zone
+              time.getlocal(timezone.formatted_offset)
+            else
+              time
+            end
+          end
+        end
       end
 
       attr_accessor :_id, :_key
-      attr_writer :created_at, :updated_at
       alias id _key
       alias __as_json as_json
       private :__as_json
