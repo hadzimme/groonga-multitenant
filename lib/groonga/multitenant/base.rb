@@ -127,7 +127,7 @@ module Groonga
           attr_writer name
 
           define_method(name) do
-            VectorColumn.new(self, name, column_class_name(range))
+            VectorColumn.new(self, name, class_name)
           end
         end
 
