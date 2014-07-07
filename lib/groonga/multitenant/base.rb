@@ -5,10 +5,26 @@ module Groonga
       include ActiveModel::Validations
       include ActiveModel::Serializers::JSON
 
+      DATA_TYPES = [
+        :Bool,
+        :Int8,
+        :UInt8,
+        :Int16,
+        :UInt16,
+        :Int32,
+        :UInt32,
+        :Int64,
+        :UInt64,
+        :Float,
+        :ShortText,
+        :Text,
+        :LongText,
+      ]
+
       class VectorColumn
         include Enumerable
 
-        def initialize(object, name, klass)
+        def initialize(object, name, range)
         end
 
         def each
@@ -69,41 +85,15 @@ module Groonga
           self.name.tableize
         end
 
-        DATA_TYPES = [
-          :Bool,
-          :Int8,
-          :UInt8,
-          :Int16,
-          :UInt16,
-          :Int32,
-          :UInt32,
-          :Int64,
-          :UInt64,
-          :Float,
-          :ShortText,
-          :Text,
-          :LongText,
-        ]
-
-        def column_class(range)
+        def define_scalar_method(name, range)
           case range.intern
           when *DATA_TYPES
-            nil
-          when :Time
-            :time
-          else
-            range.classify.constantize
-          end
-        end
-
-        def define_scalar_method(name, range)
-          case klass = column_class(range)
-          when nil
             attr_accessor name
-          when :time
+          when :Time
             define_time_range_method(name)
           else
             define_method("#{name}=") do |item|
+              klass = range.classify.constantize
               case item
               when klass
                 instance_variable_set("@#{name}", item.id)
@@ -115,17 +105,17 @@ module Groonga
             end
 
             define_method(name) do
+              klass = range.classify.constantize
               klass.find(instance_variable_get("@#{name}"))
             end
           end
         end
 
         def define_vector_method(name, range)
-          klass = column_class(range)
           attr_writer name
 
           define_method(name) do
-            VectorColumn.new(self, name, klass)
+            VectorColumn.new(self, name, range)
           end
         end
 
