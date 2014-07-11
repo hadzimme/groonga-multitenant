@@ -1,22 +1,76 @@
 module Groonga
   module Multitenant
     class Client
+      COLUMN_KEYS = [
+        :id,
+        :name,
+        :path,
+        :type,
+        :flags,
+        :domain,
+        :range,
+        :source,
+      ].freeze
+
+      class Column
+        BUILT_IN_TYPES = [
+          :Bool,
+          :Int8,
+          :UInt8,
+          :Int16,
+          :UInt16,
+          :Int32,
+          :UInt32,
+          :Int64,
+          :UInt64,
+          :Float,
+          :ShortText,
+          :Text,
+          :LongText,
+        ]
+
+        include ActiveModel::Model
+        attr_accessor *COLUMN_KEYS
+
+        def persistent?
+          !@flags[/PERSISTENT/].nil?
+        end
+
+        def vector?
+          !@flags[/COLUMN_VECTOR/].nil?
+        end
+
+        def index?
+          !@flags[/COLUMN_INDEX/].nil?
+        end
+
+        def range_type
+          case @range.intern
+          when *BUILT_IN_TYPES
+            :built_in
+          when :Time
+            :time
+          else
+            :reference
+          end
+        end
+
+        def classified_range
+          case self.range_type
+          when :reference
+            @range.classify.constantize
+          else
+            nil
+          end
+        end
+      end
+
       class ColumnList
         include Enumerable
-        KEYS = [
-          :id,
-          :name,
-          :path,
-          :type,
-          :flags,
-          :domain,
-          :range,
-          :source,
-        ].freeze
 
         def initialize(ary)
           @columns = ary[1..-1].map do |values|
-            Hash[KEYS.zip(values)]
+            Column.new(Hash[COLUMN_KEYS.zip(values)])
           end
         end
 
@@ -41,7 +95,7 @@ module Groonga
           keys = columns.map { |column| column.first.intern }
 
           @records = rows.map do |values|
-            Hash[keys.zip(values)]
+            Hash[keys.zip(values)].freeze
           end
         end
 
@@ -57,10 +111,20 @@ module Groonga
       end
 
       class Status
+        STATUS_KEYS = [
+          :alloc_count,
+          :starttime,
+          :uptime,
+          :version,
+          :n_queries,
+          :cache_hit_rate,
+          :command_version,
+          :default_command_version,
+          :max_command_version,
+        ].freeze
+
         include ActiveModel::Model
-        attr_accessor :alloc_count, :starttime, :uptime, :version
-        attr_accessor :n_queries, :cache_hit_rate, :command_version
-        attr_accessor :default_command_version, :max_command_version
+        attr_accessor *STATUS_KEYS
       end
 
       DEFAULT_OPTIONS = {

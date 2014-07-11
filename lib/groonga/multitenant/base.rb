@@ -5,22 +5,6 @@ module Groonga
       include ActiveModel::Validations
       include ActiveModel::Serializers::JSON
 
-      DATA_TYPES = [
-        :Bool,
-        :Int8,
-        :UInt8,
-        :Int16,
-        :UInt16,
-        :Int32,
-        :UInt32,
-        :Int64,
-        :UInt64,
-        :Float,
-        :ShortText,
-        :Text,
-        :LongText,
-      ]
-
       class VectorColumn
         include Enumerable
 
@@ -41,18 +25,18 @@ module Groonga
           klass.find(item)
         end
 
-        def initialize(object, name, class_name)
-          @items = object.instance_variable_get("@#{name}")
-          case class_name
-          when nil
-            @klass = nil
+        def initialize(object, column)
+          @items = object.instance_variable_get("@#{column.name}")
+          case column.range_type
+          when :built_in
             @object_filter = RAW_DATA
-          when 'Time'
-            @klass = nil
+          when :time
             @object_filter = TO_TIME
-          else
-            @klass = class_name.constantize
+          when :reference
+            @klass = column.classified_range
             @object_filter = TO_MODEL
+          else
+            raise 'There is something wrong...'
           end
         end
 
@@ -74,17 +58,17 @@ module Groonga
       class IndexColumn
         include Enumerable
 
-        def initialize(object, range, groonga)
-          @id = object.id
-          @table = object.class.name.tableize
-          @range = range
-          @klass = range.classify.constantize
+        def initialize(object, column, groonga)
           @groonga = groonga
+          @range = column.range
+          source_column = column.source.first.split('.').last
+          @query = "#{source_column}:@#{object.id}"
+          @klass = column.classified_range
         end
 
         def each
           return self.to_enum { self.count } unless block_given?
-          items = @groonga.select(@range, query: "#{@table}:@#{@id}")
+          items = @groonga.select(@range, query: @query)
 
           items.each do |params|
             yield @klass.new(params)
@@ -109,18 +93,16 @@ module Groonga
         end
 
         def define_column_based_methods
-          column_list = groonga.column_list(table_name)
+          columns = groonga.column_list(table_name)
 
-          column_list.select do |column|
-            column[:flags][/PERSISTENT/]
-          end.each do |column|
-            case column[:flags]
+          columns.select(&:persistent?).each do |column|
+            case column.flags
             when /COLUMN_SCALAR/
-              define_scalar_method(column[:name], column[:range])
+              define_scalar_method(column)
             when /COLUMN_VECTOR/
-              define_vector_method(column[:name], column[:range])
+              define_vector_method(column)
             when /COLUMN_INDEX/
-              define_index_method(column[:name], column[:range])
+              define_index_method(column)
             end
           end
         end
@@ -154,26 +136,17 @@ module Groonga
           self.name.tableize
         end
 
-        def column_class_name(range)
-          case range.intern
-          when *DATA_TYPES
-            nil
-          when :Time
-            'Time'
-          else
-            range.classify
-          end
-        end
+        def define_scalar_method(column)
+          case column.range_type
+          when :built_in
+            attr_accessor column.name
+          when :time
+            define_time_range_method(column.name)
+          when :reference
+            klass = column.classified_range
+            name = column.name
 
-        def define_scalar_method(name, range)
-          case class_name = column_class_name(range)
-          when nil
-            attr_accessor name
-          when 'Time'
-            define_time_range_method(name)
-          else
             define_method("#{name}=") do |item|
-              klass = class_name.constantize
               case item
               when klass
                 instance_variable_set("@#{name}", item.id)
@@ -185,31 +158,43 @@ module Groonga
             end
 
             define_method(name) do
-              klass = class_name.constantize
               klass.find(instance_variable_get("@#{name}"))
             end
+          else
+            raise 'There is something wrong...'
           end
         end
 
-        def define_vector_method(name, range)
-          class_name = column_class_name(range)
+        def define_vector_method(column)
+          name = column.name
           attr_writer name
 
           define_method(name) do
-            VectorColumn.new(self, name, class_name)
+            VectorColumn.new(self, column)
           end
         end
 
-        def define_index_method(name, range)
+        def define_index_method(column)
+          name = column.name
           attr_writer name
 
           define_method(name) do
-            IndexColumn.new(self, range, groonga)
+            IndexColumn.new(self, column, groonga)
           end
         end
 
         def define_time_range_method(name)
-          attr_writer name
+          define_method("#{name}=") do |time|
+            case time
+            when Time, Integer
+              instance_variable_set("@#{name}", time.to_f)
+            when Float
+              instance_variable_set("@#{name}", time)
+            else
+              raise TypeError, 'should be Time, Integer or Float'
+            end
+            time
+          end
 
           define_method(name) do
             sec = instance_variable_get("@#{name}")
@@ -247,10 +232,9 @@ module Groonga
         hash = __as_json(options)
         columns = groonga.column_list(table_name)
 
-        columns.select do |column|
-          column[:flags][/COLUMN_VECTOR/]
-        end.each do |column|
-          hash[column[:name]] = instance_variable_get("@#{column[:name]}")
+        columns.select(&:vector?).each do |column|
+          name = column.name
+          hash[name] = instance_variable_get("@#{name}")
         end
 
         hash['id'] = @_key
@@ -286,27 +270,20 @@ module Groonga
         columns = groonga.column_list(table_name)
         timestamp = {}
 
-        columns.select do |column|
-          column[:range].intern == :Time
-        end.each do |column|
-          value = instance_variable_get("@#{column[:name]}")
-          timestamp[column[:name]] = value
+        columns.select(&:time?).each do |column|
+          name = column.name
+          value = instance_variable_get("@#{name}")
+          timestamp[name] = value
         end
 
         hash = __as_json(options).merge(timestamp)
 
-        columns.select do |column|
-          column[:flags][/COLUMN_VECTOR/]
-        end.each do |column|
-          hash[column[:name]] = instance_variable_get("@#{column[:name]}")
+        columns.select(&:vector?).each do |column|
+          name = column.name
+          hash[name] = instance_variable_get("@#{name}")
         end
 
-        keys_to_reject = columns.select do |column|
-          column[:flags][/COLUMN_INDEX/]
-        end.map do |column|
-          column[:name]
-        end + ['_id']
-
+        keys_to_reject = columns.select(&:index?).map(&:name) + ['_id']
         hash.reject { |key, _| keys_to_reject.include?(key) }.to_json
       end
 
