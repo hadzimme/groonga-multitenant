@@ -237,7 +237,7 @@ module Groonga
         columns = groonga.column_list(table_name)
 
         hash['id'] = @_id
-        keys_to_reject = columns.select(&:index?).map(&:name) + ['_id']
+        keys_to_reject = columns.select(&:index?).map(&:name) + ['_id', '_key']
         hash.reject { |key, _| keys_to_reject.include?(key) }
       end
 
