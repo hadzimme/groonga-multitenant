@@ -53,6 +53,10 @@ module Groonga
         def size
           @items.size
         end
+
+        def to_json
+          self.to_a.to_json
+        end
       end
 
       class IndexColumn
@@ -277,11 +281,6 @@ module Groonga
         end
 
         hash = __as_json(options).merge(timestamp)
-
-        columns.select(&:vector?).each do |column|
-          name = column.name
-          hash[name] = instance_variable_get("@#{name}")
-        end
 
         keys_to_reject = columns.select(&:index?).map(&:name) + ['_id']
         hash.reject { |key, _| keys_to_reject.include?(key) }.to_json
