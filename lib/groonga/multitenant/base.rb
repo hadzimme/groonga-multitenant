@@ -236,8 +236,9 @@ module Groonga
         hash = __as_json(options)
         columns = groonga.column_list(table_name)
 
-        hash['id'] = @_key
-        hash.reject { |key, _| key[/^_/] }
+        hash['id'] = @_id
+        keys_to_reject = columns.select(&:index?).map(&:name) + ['_id']
+        hash.reject { |key, _| keys_to_reject.include?(key) }
       end
 
       private
