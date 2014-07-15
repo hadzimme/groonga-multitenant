@@ -236,11 +236,6 @@ module Groonga
         hash = __as_json(options)
         columns = groonga.column_list(table_name)
 
-        columns.select(&:vector?).each do |column|
-          name = column.name
-          hash[name] = instance_variable_get("@#{name}")
-        end
-
         hash['id'] = @_key
         hash.reject { |key, _| key[/^_/] }
       end
@@ -281,6 +276,11 @@ module Groonga
         end
 
         hash = __as_json(options).merge(timestamp)
+
+        columns.select(&:vector?).each do |column|
+          name = column.name
+          hash[name] = instance_variable_get("@#{name}")
+        end
 
         keys_to_reject = columns.select(&:index?).map(&:name) + ['_id']
         hash.reject { |key, _| keys_to_reject.include?(key) }.to_json
