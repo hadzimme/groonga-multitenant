@@ -114,7 +114,7 @@ module Groonga
 
       def save
         return false unless self.valid?
-        @_key ? update : create
+        @_id ? update : create
         self
       end
 
