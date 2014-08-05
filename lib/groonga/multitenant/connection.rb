@@ -44,6 +44,10 @@ module Groonga
           !@flags[/COLUMN_INDEX/].nil?
         end
 
+        def time?
+          @range == 'Time'
+        end
+
         def range_type
           case @range.intern
           when *BUILT_IN_TYPES
