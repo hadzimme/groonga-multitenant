@@ -30,11 +30,7 @@ module Groonga
 
       private
       def records
-        @groonga.select(table_name, @params)
-      end
-
-      def table_name
-        @model.name.tableize
+        @groonga.select(@model.name, @params)
       end
     end
   end
