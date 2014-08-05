@@ -94,7 +94,6 @@ module Groonga
         attr_reader :count
 
         def initialize(response_body)
-          p response_body
           count, columns, *rows = response_body[0]
           @count = count[0]
           keys = columns.map { |column| column.first.intern }
@@ -156,6 +155,7 @@ module Groonga
 
       def select(table_name, params = {})
         params = params.merge(table: table_name)
+        p params
         response = execute(:select, params)
         Select.new(response.body)
       end
