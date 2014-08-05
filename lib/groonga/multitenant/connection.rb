@@ -94,6 +94,7 @@ module Groonga
         attr_reader :count
 
         def initialize(response_body)
+          p response_body
           count, columns, *rows = response_body[0]
           @count = count[0]
           keys = columns.map { |column| column.first.intern }
