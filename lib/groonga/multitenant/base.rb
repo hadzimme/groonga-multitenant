@@ -15,13 +15,11 @@ module Groonga
         end
 
         def inherited(subclass)
-          p subclass
           subclass.define_column_based_methods
         end
 
         def define_column_based_methods
           columns.select(&:persistent?).each do |column|
-            p column
             define_column_based_method(column)
           end
 
@@ -47,7 +45,7 @@ module Groonga
         end
 
         def columns
-          @@columns ||= groonga.column_list(self.name)
+          groonga.column_list(self.name)
         end
 
         def index_columns
