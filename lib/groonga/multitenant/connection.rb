@@ -143,7 +143,6 @@ module Groonga
       def column_list(table_name)
         params = { table: table_name }
         response = execute(:column_list, params)
-        p response
         ColumnList.new(response.body)
       end
 
@@ -155,7 +154,6 @@ module Groonga
 
       def select(table_name, params = {})
         params = params.merge(table: table_name)
-        p params
         response = execute(:select, params)
         Select.new(response.body)
       end
