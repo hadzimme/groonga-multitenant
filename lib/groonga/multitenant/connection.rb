@@ -142,6 +142,7 @@ module Groonga
 
       def column_list(table_name)
         params = { table: table_name }
+        p params
         response = execute(:column_list, params)
         ColumnList.new(response.body)
       end
