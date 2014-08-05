@@ -20,6 +20,7 @@ module Groonga
 
         def define_column_based_methods
           columns.select(&:persistent?).each do |column|
+            p column
             define_column_based_method(column)
           end
 
