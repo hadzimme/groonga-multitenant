@@ -139,6 +139,7 @@ module Groonga
       def column_list(table_name)
         params = { table: table_name }
         response = execute(:column_list, params)
+        p response
         ColumnList.new(response.body)
       end
 
@@ -157,18 +158,6 @@ module Groonga
       def status
         response = execute(:status)
         Status.new(response.body)
-      end
-
-      MAX_KEY_PARAMS = {
-        output_columns: '_key',
-        sortby: '-_key',
-        limit: 1,
-      }
-
-      def max_key(table_name)
-        response = execute(:select, MAX_KEY_PARAMS.merge(table: table_name))
-        record = Select.new(response.body).first
-        record ? record[:_key] : 0
       end
 
       private
