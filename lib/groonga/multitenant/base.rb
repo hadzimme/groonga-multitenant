@@ -14,6 +14,10 @@ module Groonga
           @@flags = flags
         end
 
+        def inherited(subclass)
+          subclass.define_column_based_methods
+        end
+
         def define_column_based_methods
           columns.select(&:persistent?).each do |column|
             define_column_based_method(column)
@@ -23,11 +27,11 @@ module Groonga
         end
 
         def where(params)
-          #TODO Relation.new(@@groonga, self).where(params)
+          #TODO Relation.new(groonga, self).where(params)
         end
 
         def all
-          Relation.new(@@groonga, self)
+          Relation.new(groonga, self)
         end
 
         def find(id)
@@ -49,17 +53,22 @@ module Groonga
         end
 
         private
+        def spec
+          @@spec ||= {}
+        end
+
         def groonga
-          @@groonga ||= Connection.new(@@spec)
+          @@groonga ||= Connection.new(spec)
         end
 
         def define_column_based_method(column)
-          case column.range
-          when 'Time'
+          if column.time?
             define_time_range_method(column.name)
           else
             attr_accessor column.name
           end
+
+          nil
         end
 
         def define_time_range_method(name)
@@ -85,6 +94,8 @@ module Groonga
               time
             end
           end
+
+          nil
         end
       end
 
@@ -109,9 +120,6 @@ module Groonga
 
       def attributes
         instance_values
-      end
-
-      def as_json(options = nil)
       end
 
       private
@@ -146,12 +154,6 @@ module Groonga
 
       def groonga
         @@groonga
-      rescue NameError
-        raise 'groonga client not configured'
-      end
-
-      def table_name
-        self.class.name
       end
 
       def columns
