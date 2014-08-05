@@ -74,7 +74,7 @@ module Groonga
 
         def initialize(ary)
           @columns = ary[1..-1].map do |values|
-            Column.new(Hash[COLUMN_KEYS.zip(values)])
+            Column.new(::Hash[COLUMN_KEYS.zip(values)])
           end
         end
 
