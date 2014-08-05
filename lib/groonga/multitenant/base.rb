@@ -15,6 +15,7 @@ module Groonga
         end
 
         def inherited(subclass)
+          p subclass
           subclass.define_column_based_methods
         end
 
