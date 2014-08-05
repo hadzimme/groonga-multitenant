@@ -7,11 +7,11 @@ module Groonga
 
       class << self
         def current
-          Thread.current[:tenant]
+          Thread.current[:gm_tenant]
         end
 
         def current=(tenant)
-          Thread.current[:tenant] = tenant
+          Thread.current[:gm_tenant] = tenant
         end
       end
 
