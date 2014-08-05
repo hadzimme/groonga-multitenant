@@ -99,7 +99,7 @@ module Groonga
           keys = columns.map { |column| column.first.intern }
 
           @records = rows.map do |values|
-            Hash[keys.zip(values)].freeze
+            ::Hash[keys.zip(values)].freeze
           end
         end
 
