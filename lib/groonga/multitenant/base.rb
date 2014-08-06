@@ -15,54 +15,50 @@ module Groonga
         end
 
         def inherited(subclass)
+          @@groonga ||= Connection.new(spec)
           subclass.define_column_based_methods
         end
 
         def define_column_based_methods
-          columns.select(&:persistent?).each do |column|
+          @@columns = @@groonga.column_list(self.name)
+          @@value_columns = @@columns.reject(&:index?)
+          @@time_columns = @@columns.select(&:time?)
+          @@index_column_names = @@columns.select(&:index?).map(&:name)
+
+          @@columns.select(&:persistent?).each do |column|
             define_column_based_method(column)
           end
-
-          nil
         end
 
         def where(params)
-          #TODO Relation.new(groonga, self).where(params)
+          Relation.new(@@groonga, self).where(params)
         end
 
         def select(*columns)
-          Relation.new(groonga, self).select(*columns)
+          Relation.new(@@groonga, self).select(*columns)
+        end
+
+        def limit(num)
+          Relation.new(@@groonga, self).limit(num)
         end
 
         def all
-          Relation.new(groonga, self)
+          Relation.new(@@groonga, self)
         end
 
         def find(arg)
-          records = groonga.select(self.name, query: "_key:#{arg}")
+          records = @@groonga.select(self.name, query: "_key:#{arg}")
           raise 'record not found' unless records.first
           self.new(records.first)
         end
 
         def count
-          groonga.select(self.name, limit: 0).count
-        end
-
-        def columns
-          groonga.column_list(self.name)
-        end
-
-        def index_columns
-          @@index_columns ||= self.columns.select(&:index?)
+          @@groonga.select(self.name, limit: 0).count
         end
 
         private
         def spec
           @@spec ||= {}
-        end
-
-        def groonga
-          @@groonga ||= Connection.new(spec)
         end
 
         def define_column_based_method(column)
@@ -107,6 +103,7 @@ module Groonga
       alias id _id
       alias key _key
       alias __as_json as_json
+      private :__as_json
 
       def key=(arg)
         @_key = arg
@@ -118,7 +115,12 @@ module Groonga
 
       def save
         return false unless self.valid?
-        @_id ? update : create
+        if @_id.nil?
+          @created_at = @updated_at = Time.new.to_f
+        else
+          @updated_at = Time.new.to_f
+        end
+        @@groonga.load(value, self.class.name)
         self
       end
 
@@ -126,46 +128,25 @@ module Groonga
         instance_values
       end
 
-      private
-      def update
-        @updated_at = Time.new.to_f
-        groonga.load(value, self.class.name)
-      end
-
-      def create
-        @created_at = @updated_at = Time.new.to_f
-        groonga.load(value, self.class.name)
-      end
-
-      def json_to_load
-        timestamp = {}
-
-        columns.select(&:time?).each do |column|
-          name = column.name
-          value = instance_variable_get("@#{name}")
-          timestamp[name] = value
+      def as_json(options = nil)
+        __as_json(options).reject do |key, _|
+          @@index_column_names.include?(key)
         end
-
-        hash = self.as_json.merge(timestamp)
-
-        keys_to_reject = index_columns.map(&:name) + ['_id']
-        hash.reject { |key, _| keys_to_reject.include?(key) }.to_json
       end
 
+      private
       def value
-        "[#{json_to_load}]"
+        hash = self.as_json.merge(raw_timestamp)
+        hash.delete('_id')
+        [hash].to_json
       end
 
-      def groonga
-        @@groonga
-      end
-
-      def columns
-        self.class.columns
-      end
-
-      def index_columns
-        self.class.index_columns
+      def raw_timestamp
+        @@time_columns.reduce({}) do |result, column|
+          key = column.name
+          value = instance_variable_get("@#{key}")
+          result.merge(key => value)
+        end
       end
     end
   end

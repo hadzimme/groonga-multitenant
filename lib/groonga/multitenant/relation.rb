@@ -7,7 +7,7 @@ module Groonga
         @groonga = groonga
         @model = model
         @columns = []
-        @params = {}
+        @params = { limit: -1 }
       end
 
       def each
@@ -31,6 +31,11 @@ module Groonga
 
       def select(*columns)
         @columns.concat(columns)
+        self
+      end
+
+      def limit(num)
+        @params.merge!(limit: num)
         self
       end
 
