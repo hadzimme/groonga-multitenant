@@ -30,6 +30,10 @@ module Groonga
           #TODO Relation.new(groonga, self).where(params)
         end
 
+        def select(*columns)
+          Relation.new(groonga, self).select(*columns)
+        end
+
         def all
           Relation.new(groonga, self)
         end

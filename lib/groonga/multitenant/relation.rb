@@ -6,6 +6,7 @@ module Groonga
       def initialize(groonga, model)
         @groonga = groonga
         @model = model
+        @columns = []
         @params = {}
       end
 
@@ -28,8 +29,16 @@ module Groonga
         self
       end
 
+      def select(*columns)
+        @columns.concat(columns)
+        self
+      end
+
       private
       def records
+        unless @columns.empty?
+          @params[:output_columns] = "_id,_key,#{@columns.join(',')}"
+        end
         @groonga.select(@model.name, @params)
       end
     end
