@@ -143,7 +143,6 @@ module Groonga
       def column_list(table_name)
         params = { table: table_name }
         response = execute(:column_list, params)
-        p response
         ColumnList.new(response.body)
       end
 
