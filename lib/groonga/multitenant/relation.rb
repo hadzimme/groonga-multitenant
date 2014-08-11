@@ -39,6 +39,10 @@ module Groonga
         self
       end
 
+      def empty?
+        @groonga.select(@model.name, @params.merge(limit: 0)).count == 0
+      end
+
       private
       def records
         unless @columns.empty?
