@@ -104,8 +104,6 @@ module Groonga
       end
 
       attr_accessor :_id, :_key
-      alias id _id
-      alias key _key
       alias __as_json as_json
       private :__as_json
 
@@ -119,11 +117,10 @@ module Groonga
 
       def save
         return false unless self.valid?
-        if @_id.nil?
-          @created_at = @updated_at = Time.new.to_f
-        else
-          @updated_at = Time.new.to_f
+        unless @_id.nil?
+          @@groonga.delete(self.class.name, id: @_id)
         end
+        @created_at = Time.new.to_f
         @@groonga.load(value, self.class.name)
         self
       end
@@ -134,14 +131,13 @@ module Groonga
 
       def as_json(options = nil)
         __as_json(options).reject do |key, _|
-          @@index_column_names.include?(key)
+          @@index_column_names.include?(key) || key == '_id'
         end
       end
 
       private
       def value
         hash = self.as_json.merge(raw_timestamp)
-        hash.delete('_id')
         [hash].to_json
       end
 

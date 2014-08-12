@@ -152,6 +152,17 @@ module Groonga
         response.body
       end
 
+      def delete(table_name, arg)
+        case arg
+        when Hash
+          params = arg.merge(table: table_name)
+        else
+          params = { table: table_name, key: arg }
+        end
+        response = execute(:delete, params)
+        response.body
+      end
+
       def select(table_name, params = {})
         params = params.merge(table: table_name)
         response = execute(:select, params)
