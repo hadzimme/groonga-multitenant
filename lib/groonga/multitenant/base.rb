@@ -42,6 +42,10 @@ module Groonga
           Relation.new(@@groonga, self).limit(num)
         end
 
+        def offset(num)
+          Relation.new(@@groonga, self).offset(num)
+        end
+
         def all
           Relation.new(@@groonga, self)
         end

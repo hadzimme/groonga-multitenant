@@ -39,6 +39,11 @@ module Groonga
         self
       end
 
+      def offset(num)
+        @params.merge!(offset: num)
+        self
+      end
+
       def exist?
         @groonga.select(@model.name, @params.merge(limit: 0)).count > 0
       end
