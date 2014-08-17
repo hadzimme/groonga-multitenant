@@ -48,8 +48,8 @@ module Groonga
 
         def find(arg)
           records = @@groonga.select(self.name, query: "_key:#{arg}")
-          raise 'record not found' unless records.first
-          self.new(records.first)
+          raise 'record not found' unless record = records.first
+          self.new(record)
         end
 
         def count
