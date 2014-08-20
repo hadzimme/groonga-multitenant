@@ -7,15 +7,11 @@ module Groonga
 
       class << self
         def establish_connection(spec = {})
-          @@spec = spec
-        end
-
-        def flags=(flags)
-          @@flags = flags
+          @@groonga = Connection.new(spec)
         end
 
         def inherited(subclass)
-          @@groonga ||= Connection.new(spec)
+          return if subclass.name.nil?
           subclass.define_column_based_methods
         end
 
@@ -52,8 +48,8 @@ module Groonga
 
         def find(arg)
           records = @@groonga.select(self.name, query: "_key:#{arg}")
-          raise 'record not found' unless records.first
-          self.new(records.first)
+          raise 'record not found' unless record = records.first
+          self.new(record)
         end
 
         def count
@@ -61,10 +57,6 @@ module Groonga
         end
 
         private
-        def spec
-          @@spec ||= {}
-        end
-
         def define_column_based_method(column)
           if column.time?
             define_time_range_method(column.name)
