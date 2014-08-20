@@ -154,7 +154,7 @@ module Groonga
 
       def delete(table_name, arg)
         case arg
-        when Hash
+        when ::Hash
           params = arg.merge(table: table_name)
         else
           params = { table: table_name, key: arg }
