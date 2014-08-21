@@ -8,6 +8,7 @@ module Groonga
         @model = model
         @columns = []
         @params = { limit: -1 }
+        @order = []
       end
 
       def each
@@ -44,6 +45,11 @@ module Groonga
         self
       end
 
+      def order(*columns)
+        @order.concat(columns)
+        self
+      end
+
       def exist?
         @groonga.select(@model.name, @params.merge(limit: 0)).count > 0
       end
@@ -54,6 +60,9 @@ module Groonga
 
       private
       def records
+        unless @order.empty?
+          @params[:sortby] = @order.join(',')
+        end
         unless @columns.empty?
           @params[:output_columns] = "_id,_key,#{@columns.join(',')}"
         end
