@@ -110,7 +110,7 @@ module Groonga
         end
 
         def size
-          @records.size
+          @count
         end
       end
 
