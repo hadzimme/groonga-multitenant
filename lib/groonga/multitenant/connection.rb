@@ -94,6 +94,8 @@ module Groonga
         include Enumerable
 
         class RecordList
+          extend Forwardable
+          include Enumerable
           attr_reader :count
 
           def initialize(count, columns, *rows)
@@ -111,9 +113,7 @@ module Groonga
             self
           end
 
-          def size
-            @records.size
-          end
+          def_delegator :@records, :size
         end
 
         attr_reader :drilldown
@@ -130,7 +130,13 @@ module Groonga
           end
         end
 
-        def_delegator :@records, :each
+        def each(&block)
+          return self.to_enum { self.size } unless block_given?
+          @records.each(&block)
+          self
+        end
+
+        def_delegator :@records, :size
         def_delegator :@records, :count
       end
 
