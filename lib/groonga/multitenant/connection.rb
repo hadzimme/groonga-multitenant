@@ -119,10 +119,11 @@ module Groonga
         attr_reader :drilldown
 
         def initialize(response_body, drilldown_column)
-          @records = RecordList.new(*response_body.shift)
-          unless response_body.empty?
+          record_params, *drilldown_data = response_body
+          @records = RecordList.new(*record_params)
+          unless drilldown_column.nil?
             keys = drilldown_column.split(/,\s?/).map(&:intern)
-            vals = response_body.map { |data| RecordList.new(*data) }
+            vals = drilldown_data.map { |datum| RecordList.new(*datum) }
             @drilldown = Hash[keys.zip(vals)].freeze
           end
         end
