@@ -121,12 +121,9 @@ module Groonga
         def initialize(response_body, drilldown_column)
           @records = RecordList.new(*response_body.shift)
           unless response_body.empty?
-            @drilldown = {}
-            columns = drilldown_column.split(/,\s?/)
-
-            columns.each_with_index do |column, index|
-              @drilldown[column.intern] = RecordList.new(*response_body[index])
-            end
+            keys = drilldown_column.split(/,\s?/).map(&:intern)
+            vals = response_body.map { |data| RecordList.new(*data) }
+            @drilldown = Hash[keys.zip(vals)].freeze
           end
         end
 
