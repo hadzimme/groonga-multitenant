@@ -1,3 +1,4 @@
+require 'forwardable'
 require 'active_model'
 require 'active_support/inflector'
 require 'active_support/time'
