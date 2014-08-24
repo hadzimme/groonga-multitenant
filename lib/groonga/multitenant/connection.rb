@@ -90,28 +90,48 @@ module Groonga
       end
 
       class Select
+        extend Forwardable
         include Enumerable
-        attr_reader :count
 
-        def initialize(response_body)
-          count, columns, *rows = response_body[0]
-          @count = count[0]
-          keys = columns.map { |column| column.first.intern }
+        class RecordList
+          attr_reader :count
 
-          @records = rows.map do |values|
-            ::Hash[keys.zip(values)].freeze
+          def initialize(count, columns, *rows)
+            @count = count[0]
+            keys = columns.map { |column| column.first.intern }
+
+            @records = rows.map do |values|
+              ::Hash[keys.zip(values)].freeze
+            end
+          end
+
+          def each(&block)
+            return self.to_enum { self.size } unless block_given?
+            @records.each(&block)
+            self
+          end
+
+          def size
+            @records.size
           end
         end
 
-        def each(&block)
-          return self.to_enum { self.size } unless block_given?
-          @records.each(&block)
-          self
+        attr_reader :drilldown
+
+        def initialize(response_body, drilldown_column)
+          @records = RecordList.new(*response_body.shift)
+          unless response_body.empty?
+            @drilldown = {}
+            columns = drilldown_column.split(/,\s?/)
+
+            columns.each_with_index do |column, index|
+              @drilldown[column.intern] = RecordList.new(*response_body[index])
+            end
+          end
         end
 
-        def size
-          @records.size
-        end
+        def_delegator :@records, :each
+        def_delegator :@records, :count
       end
 
       class Status
@@ -166,7 +186,7 @@ module Groonga
       def select(table_name, params = {})
         params = params.merge(table: table_name)
         response = execute(:select, params)
-        Select.new(response.body)
+        Select.new(response.body, params[:drilldown])
       end
 
       def status
