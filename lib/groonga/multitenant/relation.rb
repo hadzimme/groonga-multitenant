@@ -50,6 +50,10 @@ module Groonga
         self
       end
 
+      def count
+        @groonga.select(@model.name, @params.merge(limit: 0)).count
+      end
+
       def exist?
         @groonga.select(@model.name, @params.merge(limit: 0)).count > 0
       end
