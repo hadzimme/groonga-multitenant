@@ -117,6 +117,12 @@ module Groonga
         self
       end
 
+      def destroy
+        unless @_id.nil?
+          @@groonga.delete(self.class.name, id: @_id)
+        end
+      end
+
       def attributes
         instance_values
       end
