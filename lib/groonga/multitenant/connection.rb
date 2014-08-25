@@ -134,8 +134,11 @@ module Groonga
           self
         end
 
+        def count
+          @records.count
+        end
+
         def_delegator :@records, :size
-        def_delegator :@records, :count
       end
 
       class Status
