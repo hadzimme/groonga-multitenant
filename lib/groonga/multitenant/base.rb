@@ -46,8 +46,8 @@ module Groonga
           Relation.new(@@groonga, self)
         end
 
-        def find(arg)
-          records = @@groonga.select(self.name, query: "_key:#{arg}")
+        def find(query)
+          records = @@groonga.select(self.name, query: query)
           raise 'record not found' unless record = records.first
           self.new(record)
         end
