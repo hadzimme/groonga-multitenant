@@ -117,6 +117,14 @@ module Groonga
         self
       end
 
+      def update_attributes(params)
+        params.each do |key, value|
+          self.public_send("#{key}=", value)
+        end
+
+        self.save
+      end
+
       def destroy
         unless @_id.nil?
           @@groonga.delete(self.class.name, id: @_id)
