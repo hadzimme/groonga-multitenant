@@ -54,6 +54,10 @@ module Groonga
         @groonga.select(@model.name, @params.merge(limit: 0)).count
       end
 
+      def drilldown
+        @groonga.select(@model.name, @params.merge(limit: 0)).drilldown
+      end
+
       def exist?
         @groonga.select(@model.name, @params.merge(limit: 0)).count > 0
       end
