@@ -124,7 +124,7 @@ module Groonga
           unless drilldown_column.nil?
             keys = drilldown_column.split(/,\s?/).map(&:intern)
             vals = drilldown_data.map { |datum| RecordList.new(*datum) }
-            @drilldown = Hash[keys.zip(vals)].freeze
+            @drilldown = ::Hash[keys.zip(vals)].freeze
           end
         end
 
