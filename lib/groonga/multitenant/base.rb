@@ -53,7 +53,8 @@ module Groonga
         end
 
         def find(id)
-          records = @@groonga.select(self.name, query: "_key:#{id}")
+          params = { output_columns: '_id, _key, *', query: "_key:#{id}" }
+          records = @@groonga.select(self.name, params)
           raise 'record not found' unless record = records.first
           self.new(record)
         end
