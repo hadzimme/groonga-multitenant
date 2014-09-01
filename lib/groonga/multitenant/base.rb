@@ -80,7 +80,15 @@ module Groonga
           values.size
         end
 
+        def max_key
+          @@groonga.select(key_table, limit: 0).count
+        end
+
         private
+        def key_table
+          @@key_table ||= "#{self}Key"
+        end
+
         def define_column_based_method(column)
           if column.time?
             define_time_range_method(column.name)
@@ -185,7 +193,7 @@ module Groonga
       end
 
       def max_key
-        @@groonga.select(key_table, limit: 0).count
+        self.class.max_key
       end
 
       def raw_timestamp
@@ -194,10 +202,6 @@ module Groonga
           value = instance_variable_get("@#{key}")
           result.merge(key => value)
         end
-      end
-
-      def key_table
-        @@key_table ||= "#{self.class.name}Key"
       end
     end
   end
