@@ -67,12 +67,12 @@ module Groonga
             raise "All objects should be `#{self}'"
           end
           raise 'There are some invalid objects' unless ary.all?(&:valid?)
-          first_key = max_key + 1
+          first_id = max_id + 1
           time = Time.new.to_f
           timestamp = { 'created_at' => time, 'updated_at' => time }
 
           values = ary.map.with_index do |item, index|
-            params = timestamp.merge('id' => first_key + index)
+            params = timestamp.merge('id' => first_id + index)
             item.as_value.merge(params)
           end
 
