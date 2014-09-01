@@ -6,6 +6,7 @@ require 'groonga/client/multiple_databases'
 require 'groonga/multitenant/tenant'
 require 'groonga/multitenant/connection'
 require 'groonga/multitenant/base'
+require 'groonga/multitenant/fork'
 require 'groonga/multitenant/relation'
 require 'groonga/multitenant/version'
 
