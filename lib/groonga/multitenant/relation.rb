@@ -75,7 +75,9 @@ module Groonga
         unless @order.empty?
           @params[:sortby] = @order.join(',')
         end
-        unless @columns.empty?
+        if @columns.empty?
+          @params[:output_columns] = '_id,_key,*'
+        else
           @params[:output_columns] = "_id,_key,#{@columns.join(',')}"
         end
         @groonga.select(@model.name, @params)
