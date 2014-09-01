@@ -53,8 +53,7 @@ module Groonga
         end
 
         def find(id)
-          params = { output_columns: '_id, _key, *', query: "_key:#{id}" }
-          records = @@groonga.select(self.name, params)
+          records = @@groonga.select(self.name, query: "id:#{id}")
           raise 'record not found' unless record = records.first
           self.new(record)
         end
@@ -73,7 +72,7 @@ module Groonga
           timestamp = { 'created_at' => time, 'updated_at' => time }
 
           values = ary.map.with_index do |item, index|
-            params = timestamp.merge('_key' => first_key + index)
+            params = timestamp.merge('id' => first_key + index)
             item.as_value.merge(params)
           end
 
@@ -81,13 +80,13 @@ module Groonga
           values.size
         end
 
-        def max_key
-          @@groonga.select(key_table, limit: 0).count
+        def max_id
+          @@groonga.select(id_table, limit: 0).count
         end
 
         private
-        def key_table
-          @@key_table ||= "#{self}Key"
+        def id_table
+          @@id_table ||= "#{self}Id"
         end
 
         def define_column_based_method(column)
@@ -129,7 +128,6 @@ module Groonga
       end
 
       attr_accessor :_id, :_key
-      alias id _key
       alias __as_json as_json
       private :__as_json
 
@@ -152,7 +150,7 @@ module Groonga
 
         params.reject do |key, _|
           @@index_column_names.include?(key) || key[/^_/]
-        end.merge(id: params['_key'])
+        end
       end
 
       def as_value
@@ -183,7 +181,7 @@ module Groonga
 
       private
       def create_record
-        @_key = max_key + 1
+        @id = max_id + 1
         @created_at = @updated_at = Time.new.to_f
         @@groonga.load([as_value].to_json, self.class.name)
       end
@@ -193,8 +191,8 @@ module Groonga
         @@groonga.load([as_value].to_json, self.class.name)
       end
 
-      def max_key
-        self.class.max_key
+      def max_id
+        self.class.max_id
       end
 
       def raw_timestamp
