@@ -5,6 +5,12 @@ module Groonga
       include ActiveModel::Validations
       include ActiveModel::Serializers::JSON
 
+      MAX_KEY_QUERY = {
+        limit: 1,
+        sortby: '-_key',
+        output_columns: '_key',
+      }.freeze
+
       class << self
         def establish_connection(spec = {})
           @@groonga = Connection.new(spec)
@@ -46,14 +52,32 @@ module Groonga
           Relation.new(@@groonga, self)
         end
 
-        def find(query)
-          records = @@groonga.select(self.name, query: query)
+        def find(id)
+          records = @@groonga.select(self.name, query: "_key:#{id}")
           raise 'record not found' unless record = records.first
           self.new(record)
         end
 
         def count
           @@groonga.select(self.name, limit: 0).count
+        end
+
+        def import(ary)
+          unless ary.all?{|item| item.instance_of?(self) }
+            raise "All objects should be `#{self}'"
+          end
+          raise 'There are some invalid objects' unless ary.all?(&:valid?)
+          first_key = max_key + 1
+          time = Time.new.to_f
+          timestamp = { 'created_at' => time, 'updated_at' => time }
+
+          values = ary.map.with_index do |item, index|
+            params = timestamp.merge('_key' => first_key + index)
+            item.as_value.merge(params)
+          end
+
+          @@groonga.load(values.to_json, self.name)
+          values.size
         end
 
         private
@@ -96,25 +120,38 @@ module Groonga
       end
 
       attr_accessor :_id, :_key
+      alias id _key
       alias __as_json as_json
       private :__as_json
 
-      def key=(arg)
-        @_key = arg
-      end
-
       def persisted?
-        !@_id.nil?
+        !@_key.nil?
       end
 
-      def save
-        return false unless self.valid?
-        unless @_id.nil?
-          @@groonga.delete(self.class.name, id: @_id)
+      def destroy
+        unless @_key.nil?
+          @@groonga.delete(self.class.name, key: @_key)
         end
-        @created_at = Time.new.to_f
-        @@groonga.load(value, self.class.name)
-        self
+      end
+
+      def attributes
+        instance_values
+      end
+
+      def as_json(options = nil)
+        params = __as_json(options)
+
+        params.reject do |key, _|
+          @@index_column_names.include?(key) || key[/^_/]
+        end.merge(id: params['_key'])
+      end
+
+      def as_value
+        params = __as_json(options)
+
+        params.reject do |key, _|
+          @@index_column_names.include?(key) || key == '_id'
+        end.merge(raw_timestamp)
       end
 
       def update_attributes(params)
@@ -125,26 +162,30 @@ module Groonga
         self.save
       end
 
-      def destroy
-        unless @_id.nil?
-          @@groonga.delete(self.class.name, id: @_id)
+      def save
+        return false unless self.valid?
+        if @_key.nil?
+          create_record
+        else
+          update_record
         end
-      end
-
-      def attributes
-        instance_values
-      end
-
-      def as_json(options = nil)
-        __as_json(options).reject do |key, _|
-          @@index_column_names.include?(key) || key == '_id'
-        end
+        self
       end
 
       private
-      def value
-        hash = self.as_json.merge(raw_timestamp)
-        [hash].to_json
+      def create_record
+        @_key = max_key + 1
+        @created_at = @updated_at = Time.new.to_f
+        @@groonga.load([as_value].to_json, self.class.name)
+      end
+
+      def update_record
+        @updated_at = Time.new.to_f
+        @@groonga.load([as_value].to_json, self.class.name)
+      end
+
+      def max_key
+        @@groonga.select(key_table, limit: 0).count
       end
 
       def raw_timestamp
@@ -153,6 +194,10 @@ module Groonga
           value = instance_variable_get("@#{key}")
           result.merge(key => value)
         end
+      end
+
+      def key_table
+        @@key_table ||= "#{self.class.name}Key"
       end
     end
   end
