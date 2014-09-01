@@ -72,7 +72,8 @@ module Groonga
           timestamp = { 'created_at' => time, 'updated_at' => time }
 
           values = ary.map.with_index do |item, index|
-            params = timestamp.merge('id' => first_id + index)
+            id = first_id + index
+            params = timestamp.merge('_key' => id, 'id' => id)
             item.as_value.merge(params)
           end
 
@@ -181,7 +182,7 @@ module Groonga
 
       private
       def create_record
-        @id = max_id + 1
+        @_key = @id = max_id + 1
         @created_at = @updated_at = Time.new.to_f
         @@groonga.load([as_value].to_json, self.class.name)
       end
