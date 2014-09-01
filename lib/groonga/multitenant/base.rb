@@ -147,7 +147,7 @@ module Groonga
       end
 
       def as_value
-        params = __as_json(options)
+        params = __as_json(nil)
 
         params.reject do |key, _|
           @@index_column_names.include?(key) || key == '_id'
