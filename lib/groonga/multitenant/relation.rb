@@ -66,6 +66,10 @@ module Groonga
         @groonga.select(@model.name, @params.merge(limit: 0)).count == 0
       end
 
+      def to_json
+        self.to_a.to_json
+      end
+
       private
       def records
         unless @order.empty?
