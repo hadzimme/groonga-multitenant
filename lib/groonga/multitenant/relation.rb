@@ -16,14 +16,16 @@ module Groonga
 
       def each
         return self.to_enum { records.size } unless block_given?
+        case response = execute_command
+        when Groonga::Client::Response::Error
+          raise ParamInvalid, 'Invalid parameters', caller
+        else
+          response.records.each do |record|
+            yield @model.new(record)
+          end
 
-        records.each do |record|
-          yield @model.new(record)
+          self
         end
-
-        self
-      rescue Connection::InvalidArgument
-        raise ParamInvalid, 'Invalid parameters', caller
       end
 
       def size
@@ -76,7 +78,7 @@ module Groonga
       end
 
       private
-      def records
+      def execute_command
         unless @order.empty?
           @params[:sortby] = @order.join(',')
         end
@@ -85,7 +87,7 @@ module Groonga
         else
           @params[:output_columns] = "_id,_key,#{@columns.join(',')}"
         end
-        @groonga.select(@params.merge(table: @model.name)).records
+        @groonga.select(@params.merge(table: @model.name))
       end
     end
   end
