@@ -54,8 +54,8 @@ module Groonga
         end
 
         def find(id)
-          records = @@client.select(table: self.name, query: "id:#{id}")
-          unless record = records.first
+          response = @@client.select(table: self.name, query: "id:#{id}")
+          unless record = response.records.first
             raise RecordNotFound, 'Record not found', caller
           end
           self.new(record)
