@@ -1,6 +1,8 @@
 module Groonga
   module Multitenant
     class Connection
+      include ReturnCode
+
       COLUMN_KEYS = [
         :id,
         :name,
@@ -11,6 +13,9 @@ module Groonga
         :range,
         :source,
       ].freeze
+
+      class InvalidArgument < StandardError
+      end
 
       class Column
         BUILT_IN_TYPES = [
@@ -190,7 +195,13 @@ module Groonga
       def select(table_name, params = {})
         params = params.merge(table: table_name)
         response = execute(:select, params)
-        Select.new(response.body, params[:drilldown])
+        return_code, _u, _e, message = response.header
+        case return_code
+        when INVALID_ARGUMENT
+          raise InvalidArgument, message, caller
+        else
+          Select.new(response.body, params[:drilldown])
+        end
       end
 
       def status

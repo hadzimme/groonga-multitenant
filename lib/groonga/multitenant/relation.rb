@@ -1,5 +1,8 @@
 module Groonga
   module Multitenant
+    class ParamInvalid < StandardError
+    end
+
     class Relation
       include Enumerable
 
@@ -19,6 +22,8 @@ module Groonga
         end
 
         self
+      rescue Connection::InvalidArgument
+        raise ParamInvalid, 'Invalid parameters', caller
       end
 
       def size
