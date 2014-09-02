@@ -1,12 +1,15 @@
 module Groonga
   module Multitenant
+    class RecordInvalid < StandardError
+    end
+
+    class RecordNotFound < StandardError
+    end
+
     class Base
       include ActiveModel::Model
       include ActiveModel::Validations
       include ActiveModel::Serializers::JSON
-
-      class NotFound < StandardError
-      end
 
       class << self
         def establish_connection(spec = {})
@@ -52,7 +55,7 @@ module Groonga
         def find(id)
           records = @@groonga.select(self.name, query: "id:#{id}")
           unless record = records.first
-            raise NotFound, 'Record not found', caller
+            raise RecordNotFound, 'Record not found', caller
           end
           self.new(record)
         end
@@ -170,9 +173,10 @@ module Groonga
       end
 
       def save
-        return false unless self.valid?
         update_metadata
-        raise 'Invalid id' unless @_key == @id
+        unless @_key == @id
+          raise RecordInvalid, 'Id should not be modified', caller
+        end
         @@groonga.load([as_value].to_json, self.class.name)
         self
       end
