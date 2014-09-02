@@ -5,12 +5,6 @@ module Groonga
       include ActiveModel::Validations
       include ActiveModel::Serializers::JSON
 
-      MAX_KEY_QUERY = {
-        limit: 1,
-        sortby: '-_key',
-        output_columns: '_key',
-      }.freeze
-
       class << self
         def establish_connection(spec = {})
           @@groonga = Connection.new(spec)
@@ -172,24 +166,19 @@ module Groonga
 
       def save
         return false unless self.valid?
-        if @_key.nil?
-          create_record
-        else
-          update_record
-        end
+        update_metadata
+        raise 'Invalid id' unless @_key == @id
+        @@groonga.load([as_value].to_json, self.class.name)
         self
       end
 
       private
-      def create_record
-        @_key = @id = max_id + 1
-        @created_at = @updated_at = Time.new.to_f
-        @@groonga.load([as_value].to_json, self.class.name)
-      end
-
-      def update_record
+      def update_metadata
         @updated_at = Time.new.to_f
-        @@groonga.load([as_value].to_json, self.class.name)
+        if @_key.nil?
+          @created_at = @updated_at
+          @_key = @id = max_id + 1
+        end
       end
 
       def max_id
