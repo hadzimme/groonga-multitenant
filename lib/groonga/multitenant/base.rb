@@ -5,6 +5,9 @@ module Groonga
       include ActiveModel::Validations
       include ActiveModel::Serializers::JSON
 
+      class NotFound < StandardError
+      end
+
       class << self
         def establish_connection(spec = {})
           @@groonga = Connection.new(spec)
@@ -48,7 +51,9 @@ module Groonga
 
         def find(id)
           records = @@groonga.select(self.name, query: "id:#{id}")
-          raise 'record not found' unless record = records.first
+          unless record = records.first
+            raise NotFound, 'Record not found', caller
+          end
           self.new(record)
         end
 
