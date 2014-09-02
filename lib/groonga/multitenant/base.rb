@@ -13,7 +13,7 @@ module Groonga
 
       class << self
         def establish_connection(spec = {})
-          @@client = Groonga::Client.new(spec)
+          @@client = Groonga::Client.new(spec.merge(prefix: tenant.code))
         end
 
         def inherited(subclass)
@@ -128,6 +128,13 @@ module Groonga
           end
 
           nil
+        end
+
+        def tenant
+          unless tenant = Groonga::Multitenant::Tenant.current
+            raise 'tenant undefined'
+          end
+          tenant
         end
       end
 
