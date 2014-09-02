@@ -94,7 +94,7 @@ module Groonga
         end
 
         def define_column_based_method(column)
-          if column.time?
+          if column.range == 'Time'
             define_time_range_method(column.name)
           else
             attr_accessor column.name
