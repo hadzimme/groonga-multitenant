@@ -85,7 +85,7 @@ module Groonga
         end
 
         def max_id
-          @@client.select(table: id_table, limit: 0).count
+          @@client.select(table: id_table, limit: 0).n_hits
         end
 
         private
