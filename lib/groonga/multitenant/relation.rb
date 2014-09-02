@@ -85,7 +85,7 @@ module Groonga
         else
           @params[:output_columns] = "_id,_key,#{@columns.join(',')}"
         end
-        @groonga.select(table: @model.name, @params)
+        @groonga.select(@params.merge(table: @model.name))
       end
     end
   end
