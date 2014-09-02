@@ -13,7 +13,7 @@ module Groonga
 
       class << self
         def establish_connection(spec = {})
-          @@groonga = Connection.new(spec)
+          @@client = Groonga::Client.new(spec)
         end
 
         def inherited(subclass)
@@ -22,38 +22,39 @@ module Groonga
         end
 
         def define_column_based_methods
-          @@columns = @@groonga.column_list(self.name)
-          @@value_columns = @@columns.reject(&:index?)
-          @@time_columns = @@columns.select(&:time?)
-          @@index_column_names = @@columns.select(&:index?).map(&:name)
+          @@columns = @@client.column_list(table: self.name)
+          @@time_columns = @@columns.select{|c| c.range == 'Time' }
+          @@value_columns = @@columns.reject{|c| c.flags[/COLUMN_INDEX/] }
+          @@index_columns = @@columns.select{|c| c.flags[/COLUMN_INDEX/] }
+          @@index_column_names = @@index_columns.map(&:name)
 
-          @@columns.select(&:persistent?).each do |column|
+          @@columns.select{|c| c.flags[/PERSISTENT/] }.each do |column|
             define_column_based_method(column)
           end
         end
 
         def where(params)
-          Relation.new(@@groonga, self).where(params)
+          Relation.new(@@client, self).where(params)
         end
 
         def select(*columns)
-          Relation.new(@@groonga, self).select(*columns)
+          Relation.new(@@client, self).select(*columns)
         end
 
         def limit(num)
-          Relation.new(@@groonga, self).limit(num)
+          Relation.new(@@client, self).limit(num)
         end
 
         def offset(num)
-          Relation.new(@@groonga, self).offset(num)
+          Relation.new(@@client, self).offset(num)
         end
 
         def all
-          Relation.new(@@groonga, self)
+          Relation.new(@@client, self)
         end
 
         def find(id)
-          records = @@groonga.select(self.name, query: "id:#{id}")
+          records = @@client.select(table: self.name, query: "id:#{id}")
           unless record = records.first
             raise RecordNotFound, 'Record not found', caller
           end
@@ -61,7 +62,7 @@ module Groonga
         end
 
         def count
-          @@groonga.select(self.name, limit: 0).count
+          @@client.select(table: self.name, limit: 0).n_hits
         end
 
         def import(ary)
@@ -79,12 +80,12 @@ module Groonga
             item.as_value.merge(params)
           end
 
-          @@groonga.load(values.to_json, self.name)
+          @@client.load(values: values.to_json, table: self.name)
           values.size
         end
 
         def max_id
-          @@groonga.select(id_table, limit: 0).count
+          @@client.select(table: id_table, limit: 0).count
         end
 
         private
@@ -140,7 +141,7 @@ module Groonga
 
       def destroy
         unless @_key.nil?
-          @@groonga.delete(self.class.name, key: @_key)
+          @@client.delete(table: self.class.name, key: @_key)
         end
       end
 
@@ -177,7 +178,7 @@ module Groonga
         unless @_key == @id
           raise RecordInvalid, 'Id should not be modified', caller
         end
-        @@groonga.load([as_value].to_json, self.class.name)
+        @@client.load(values: [as_value].to_json, table: self.class.name)
         self
       end
 

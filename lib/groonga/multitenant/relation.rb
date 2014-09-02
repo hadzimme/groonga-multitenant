@@ -56,19 +56,19 @@ module Groonga
       end
 
       def count
-        @groonga.select(@model.name, @params.merge(limit: 0)).count
+        @groonga.select(table: @model.name, @params.merge(limit: 0)).n_hits
       end
 
       def drilldown
-        @groonga.select(@model.name, @params.merge(limit: 0)).drilldown
+        @groonga.select(table: @model.name, @params.merge(limit: 0)).drilldown
       end
 
       def exist?
-        @groonga.select(@model.name, @params.merge(limit: 0)).count > 0
+        @groonga.select(table: @model.name, @params.merge(limit: 0)).n_hits > 0
       end
 
       def empty?
-        @groonga.select(@model.name, @params.merge(limit: 0)).count == 0
+        @groonga.select(table: @model.name, @params.merge(limit: 0)).n_hits == 0
       end
 
       def to_json
@@ -85,7 +85,7 @@ module Groonga
         else
           @params[:output_columns] = "_id,_key,#{@columns.join(',')}"
         end
-        @groonga.select(@model.name, @params)
+        @groonga.select(table: @model.name, @params)
       end
     end
   end
