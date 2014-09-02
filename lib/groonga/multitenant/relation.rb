@@ -56,19 +56,19 @@ module Groonga
       end
 
       def count
-        @groonga.select(table: @model.name, @params.merge(limit: 0)).n_hits
+        @groonga.select(@params.merge(limit: 0, table: @model.name)).n_hits
       end
 
       def drilldown
-        @groonga.select(table: @model.name, @params.merge(limit: 0)).drilldown
+        @groonga.select(@params.merge(limit: 0, table: @model.name)).drilldown
       end
 
       def exist?
-        @groonga.select(table: @model.name, @params.merge(limit: 0)).n_hits > 0
+        @groonga.select(@params.merge(limit: 0, table: @model.name)).n_hits > 0
       end
 
       def empty?
-        @groonga.select(table: @model.name, @params.merge(limit: 0)).n_hits == 0
+        @groonga.select(@params.merge(limit: 0, table: @model.name)).n_hits == 0
       end
 
       def to_json
