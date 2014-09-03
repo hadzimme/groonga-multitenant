@@ -16,16 +16,15 @@ module Groonga
 
       def each
         return self.to_enum { records.size } unless block_given?
-        case response = execute_command
-        when Groonga::Client::Response::Error
-          raise ParamInvalid, 'Invalid parameters', caller
-        else
-          response.records.each do |record|
-            yield @model.new(record)
-          end
+        response = execute_command
 
-          self
+        response.records.each do |record|
+          yield @model.new(record)
         end
+      rescue Connection::ResponseError
+        raise ParamInvalid, 'Invalid parameters', caller
+      else
+        self
       end
 
       def size
