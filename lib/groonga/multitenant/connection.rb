@@ -7,6 +7,10 @@ module Groonga
       class TenantMissing < StandardError
       end
 
+      def initialize(params = {})
+        @config = params
+      end
+
       def column_list(table)
         execute(:column_list, table: table)
       end
@@ -25,7 +29,7 @@ module Groonga
 
       private
       def execute(command, params = {})
-        response = Groonga::Client.open(prefix: tenant.code) do |client|
+        response = Groonga::Client.open(@config.merge(prefix: tenant.code)) do |client|
           client.public_send(command, params)
         end
 
