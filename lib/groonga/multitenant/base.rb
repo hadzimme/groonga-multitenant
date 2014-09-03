@@ -129,13 +129,6 @@ module Groonga
 
           nil
         end
-
-        def tenant
-          unless tenant = Groonga::Multitenant::Tenant.current
-            raise 'tenant undefined'
-          end
-          tenant
-        end
       end
 
       attr_accessor :_id, :_key
