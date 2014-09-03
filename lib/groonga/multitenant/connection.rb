@@ -1,10 +1,10 @@
 module Groonga
   module Multitenant
     class Connection
-      class ResponseError < Standard::Error
+      class ResponseError < StandardError
       end
 
-      class TenantMissing < Standard::Error
+      class TenantMissing < StandardError
       end
 
       def column_list(table)
