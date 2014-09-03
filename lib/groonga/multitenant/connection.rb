@@ -29,7 +29,9 @@ module Groonga
 
       private
       def execute(command, params = {})
-        response = Groonga::Client.open(@config.merge(prefix: tenant.code)) do |client|
+        config = @config.merge(prefix: tenant.code)
+
+        response = Groonga::Client.open(config) do |client|
           client.public_send(command, params)
         end
 
