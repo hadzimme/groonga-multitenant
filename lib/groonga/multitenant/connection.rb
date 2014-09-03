@@ -4,6 +4,9 @@ module Groonga
       class ResponseError < Standard::Error
       end
 
+      class TenantMissing < Standard::Error
+      end
+
       def column_list(table)
         execute(:column_list, table: table)
       end
@@ -22,7 +25,7 @@ module Groonga
 
       private
       def execute(command, params = {})
-        response = Groonga::Client.open do |client|
+        response = Groonga::Client.open(prefix: tenant.code) do |client|
           client.public_send(command, params)
         end
 
@@ -33,6 +36,13 @@ module Groonga
         else
           response
         end
+      end
+
+      def tenant
+        unless current_tenant = Tenant.current
+          raise TenantMissing, 'Tenant should be set', caller(2)
+        end
+        current_tenant
       end
     end
   end
