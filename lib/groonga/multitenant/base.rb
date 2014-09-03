@@ -12,8 +12,8 @@ module Groonga
       include ActiveModel::Serializers::JSON
 
       class << self
-        def establish_connection(spec = {})
-          @@client = Groonga::Client.new(spec.merge(prefix: tenant.code))
+        def establish_connection(params = {})
+          @@connection = Connection.new(params)
         end
 
         def inherited(subclass)
@@ -22,7 +22,7 @@ module Groonga
         end
 
         def define_column_based_methods
-          @@columns = @@client.column_list(table: self.name)
+          @@columns = @@connection.column_list(self.name)
           @@time_columns = @@columns.select{|c| c.range == 'Time' }
           @@value_columns = @@columns.reject{|c| c.flags[/COLUMN_INDEX/] }
           @@index_columns = @@columns.select{|c| c.flags[/COLUMN_INDEX/] }
@@ -34,27 +34,27 @@ module Groonga
         end
 
         def where(params)
-          Relation.new(@@client, self).where(params)
+          Relation.new(@@connection, self).where(params)
         end
 
         def select(*columns)
-          Relation.new(@@client, self).select(*columns)
+          Relation.new(@@connection, self).select(*columns)
         end
 
         def limit(num)
-          Relation.new(@@client, self).limit(num)
+          Relation.new(@@connection, self).limit(num)
         end
 
         def offset(num)
-          Relation.new(@@client, self).offset(num)
+          Relation.new(@@connection, self).offset(num)
         end
 
         def all
-          Relation.new(@@client, self)
+          Relation.new(@@connection, self)
         end
 
         def find(id)
-          response = @@client.select(table: self.name, query: "id:#{id}")
+          response = @@connection.select(self.name, query: "id:#{id}")
           unless record = response.records.first
             raise RecordNotFound, 'Record not found', caller
           end
@@ -62,7 +62,7 @@ module Groonga
         end
 
         def count
-          @@client.select(table: self.name, limit: 0).n_hits
+          @@connection.select(self.name, limit: 0).n_hits
         end
 
         def import(ary)
@@ -80,12 +80,12 @@ module Groonga
             item.as_value.merge(params)
           end
 
-          @@client.load(values: values.to_json, table: self.name)
+          @@connection.load(values.to_json, self.name)
           values.size
         end
 
         def max_id
-          @@client.select(table: id_table, limit: 0).n_hits
+          @@connection.select(id_table, limit: 0).n_hits
         end
 
         private
@@ -148,7 +148,7 @@ module Groonga
 
       def destroy
         unless @_key.nil?
-          @@client.delete(table: self.class.name, key: @_key)
+          @@connection.delete(self.class.name, key: @_key)
         end
       end
 
@@ -185,7 +185,7 @@ module Groonga
         unless @_key == @id
           raise RecordInvalid, 'Id should not be modified', caller
         end
-        @@client.load(values: [as_value].to_json, table: self.class.name)
+        @@connection.load([as_value].to_json, self.class.name)
         self
       end
 
