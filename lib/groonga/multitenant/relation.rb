@@ -65,10 +65,6 @@ module Groonga
         @groonga.select(@model.name, @params.merge(limit: 0)).n_hits
       end
 
-      def drilldown
-        @groonga.select(@model.name, @params.merge(limit: 0)).drilldown
-      end
-
       def exist?
         @groonga.select(@model.name, @params.merge(limit: 0)).n_hits > 0
       end
