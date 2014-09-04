@@ -16,61 +16,56 @@ module Groonga
 
       def each
         return self.to_enum { self.count } unless block_given?
-        response = execute_command
 
         response.records.each do |record|
           yield @model.new(record)
         end
-      rescue Connection::ResponseError
-        raise ParamInvalid, 'Invalid parameters', caller
-      else
-        self
-      end
 
-      def size
-        self.count
+        self
       end
 
       def where(params)
         @params.merge!(params)
+        @response = nil
         self
       end
 
       def select(*columns)
         @columns.concat(columns)
+        @response = nil
         self
       end
 
       def limit(num)
         @params.merge!(limit: num)
+        @response = nil
         self
       end
 
       def offset(num)
         @params.merge!(offset: num)
+        @response = nil
         self
       end
 
       def drilldown(columns)
         @params.merge!(drilldown: columns)
+        @response = nil
         self
       end
 
       def order(*columns)
         @order.concat(columns)
+        @response = nil
         self
       end
 
       def n_hits
-        @groonga.select(@model.name, @params.merge(limit: 0)).n_hits
+        response.n_hits
       end
 
-      def exist?
-        @groonga.select(@model.name, @params.merge(limit: 0)).n_hits > 0
-      end
-
-      def empty?
-        @groonga.select(@model.name, @params.merge(limit: 0)).n_hits == 0
+      def drilldowns
+        response.drilldowns
       end
 
       def to_json
@@ -78,6 +73,10 @@ module Groonga
       end
 
       private
+      def response
+        @response ||= execute_command
+      end
+
       def execute_command
         unless @order.empty?
           @params[:sortby] = @order.join(',')
@@ -88,6 +87,8 @@ module Groonga
           @params[:output_columns] = "_id,_key,#{@columns.join(',')}"
         end
         @groonga.select(@model.name, @params)
+      rescue Connection::ResponseError
+        raise ParamInvalid, 'Invalid parameters', caller(1)
       end
     end
   end
