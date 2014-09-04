@@ -52,7 +52,7 @@ module Groonga
       end
 
       def drilldown(columns)
-        @params.merge!(drilldown: colomns)
+        @params.merge!(drilldown: columns)
         self
       end
 
