@@ -49,6 +49,10 @@ module Groonga
           Relation.new(@@connection, self).offset(num)
         end
 
+        def drilldown(columns)
+          Relation.new(@@connection, self).drilldown(columns)
+        end
+
         def all
           Relation.new(@@connection, self)
         end

@@ -15,7 +15,7 @@ module Groonga
       end
 
       def each
-        return self.to_enum { records.size } unless block_given?
+        return self.to_enum { self.count } unless block_given?
         response = execute_command
 
         response.records.each do |record|
@@ -28,7 +28,7 @@ module Groonga
       end
 
       def size
-        records.size
+        self.count
       end
 
       def where(params)
@@ -51,12 +51,17 @@ module Groonga
         self
       end
 
+      def drilldown(columns)
+        @params.merge!(drilldown: colomns)
+        self
+      end
+
       def order(*columns)
         @order.concat(columns)
         self
       end
 
-      def count
+      def n_hits
         @groonga.select(@model.name, @params.merge(limit: 0)).n_hits
       end
 
