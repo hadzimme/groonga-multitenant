@@ -53,6 +53,10 @@ module Groonga
           Relation.new(@@connection, self).drilldown(columns)
         end
 
+        def drilldown_limit(num)
+          Relation.new(@@connection, self).drilldown_limit(num)
+        end
+
         def all
           Relation.new(@@connection, self)
         end

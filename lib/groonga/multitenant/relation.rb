@@ -55,6 +55,12 @@ module Groonga
         self
       end
 
+      def drilldown_limit(num)
+        @params.merge!(drilldown_limit: num)
+        @response = nil
+        self
+      end
+
       def order(*columns)
         @order.concat(columns)
         @response = nil
