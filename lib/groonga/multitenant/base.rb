@@ -183,6 +183,12 @@ module Groonga
           raise RecordInvalid, 'Id should not be modified', caller
         end
         @@connection.load([as_value].to_json, self.class.name)
+        params = @@connection.select(self.name, query: "id:#{@id}").records.first
+
+        params.each do |attr, value|
+          self.public_send("#{attr}=", value)
+        end
+
         self
       end
 
