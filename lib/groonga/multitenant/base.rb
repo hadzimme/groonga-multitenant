@@ -62,7 +62,7 @@ module Groonga
         end
 
         def find(id)
-          response = @@connection.select(self.name, query: "id:#{id}")
+          response = @@connection.select(self.name, query: "_key:#{id}")
           unless record = response.records.first
             raise RecordNotFound, 'Record not found', caller
           end
@@ -187,7 +187,7 @@ module Groonga
           raise RecordInvalid, 'Id should not be modified', caller
         end
         @@connection.load([as_value].to_json, self.class.name)
-        params = @@connection.select(self.class.name, query: "id:#{@id}").records.first
+        params = @@connection.select(self.class.name, query: "_key:#{@id}").records.first
 
         params.each do |attr, value|
           self.public_send("#{attr}=", value)
