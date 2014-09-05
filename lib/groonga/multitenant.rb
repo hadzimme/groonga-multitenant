@@ -8,6 +8,7 @@ require 'groonga/multitenant/connection'
 require 'groonga/multitenant/return_code'
 require 'groonga/multitenant/base'
 require 'groonga/multitenant/fork'
+require 'groonga/multitenant/pagination'
 require 'groonga/multitenant/relation'
 require 'groonga/multitenant/version'
 

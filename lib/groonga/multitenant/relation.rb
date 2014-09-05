@@ -5,6 +5,7 @@ module Groonga
 
     class Relation
       include Enumerable
+      include Pagination
 
       def initialize(groonga, model)
         @groonga = groonga
