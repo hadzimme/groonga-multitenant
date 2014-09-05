@@ -94,7 +94,7 @@ module Groonga
 
         private
         def id_table
-          @@id_table ||= "#{self}Id"
+          "#{self}Id"
         end
 
         def define_column_based_method(column)
