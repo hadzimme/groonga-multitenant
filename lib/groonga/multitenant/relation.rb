@@ -49,6 +49,12 @@ module Groonga
         self
       end
 
+      def match_columns(columns)
+        @params.merge!(match_columns: columns)
+        @response = nil
+        self
+      end
+
       def drilldown(columns)
         @params.merge!(drilldown: columns)
         @response = nil
