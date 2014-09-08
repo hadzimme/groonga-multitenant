@@ -61,6 +61,10 @@ module Groonga
           Relation.new(@@connection, self).drilldown_order(columns)
         end
 
+        def drilldown_output(columns)
+          Relation.new(@@connection, self).drilldown_output(columns)
+        end
+
         def all
           Relation.new(@@connection, self)
         end
