@@ -61,6 +61,12 @@ module Groonga
         self
       end
 
+      def drilldown_order(columns)
+        @params.merge!(drilldown_sortby: columns)
+        @response = nil
+        self
+      end
+
       def order(*columns)
         @order.concat(columns)
         @response = nil
