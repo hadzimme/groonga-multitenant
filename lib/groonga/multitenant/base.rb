@@ -81,6 +81,22 @@ module Groonga
           self.new(record)
         end
 
+        def find_by(arg)
+          case arg
+          when ::Hash
+            query = arg.map{|k, v| "#{k}:#{v}" }.join(" ")
+          when ::String
+            query = arg
+          else
+            raise TypeError, "Argument should be Hash or String", caller
+          end
+          response = @@connection.select(self.name, query: query)
+          unless record = response.records.first
+            raise RecordNotFound, 'Record not found', caller
+          end
+          self.new(record)
+        end
+
         def count
           @@connection.select(self.name, limit: 0).n_hits
         end
