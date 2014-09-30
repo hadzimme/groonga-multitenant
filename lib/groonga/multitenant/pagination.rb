@@ -3,7 +3,7 @@ module Groonga
     module Pagination
       def current_page
         return 0 if n_records == 0
-        @params[:offset] + 1
+        @params[:offset] / @params[:limit] + 1
       end
 
       def n_pages
@@ -20,13 +20,12 @@ module Groonga
 
       def start_offset
         return 0 if n_records == 0
-        (current_page - 1) * page_size + 1
+        @params[:offset] + 1
       end
 
       def end_offset
         return 0 if n_records == 0
-        diff = page_size - response.records.size
-        current_page * page_size - diff
+        @params[:offset] + @params[:limit]
       end
 
       def prev_page
